@@ -1,0 +1,44 @@
+<input id="input" type="text" />
+<button id="send">Send</button>
+<pre id="user"></pre>
+<button id="dump">Dump</button>
+<div id="history"></div>
+<pre id="output"></pre>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    var input = document.getElementById("input");
+    var output = document.getElementById("output");
+    var user = document.getElementById("user");
+    var socket = new WebSocket("ws://localhost:8080/ws");
+    var username = Math.random().toString();
+    socket.onopen = function() {
+        output.innerHTML += "Status: Connected\n";
+        user.innerHTML += "user:" + username;
+    };
+
+    socket.onmessage = function(e) {
+        var socket_data = JSON.parse(e.data)
+        output.innerHTML += "Username: " + socket_data.username + " Message: " + socket_data.message + "\n";
+    };
+
+    $("#dump").click(function() {
+        $.get("http://localhost:8787/get_history", function(data) {
+            if (data != null) {
+                $("#history").html(data.map(el => {
+                    return `Username: ${el.username} Message: ${el.message}`
+                }).join('<br/>'));
+            } else {
+                alert(`history is null !`)
+            }
+
+        });
+    });
+
+    $("#send").click(function() {
+        socket.send(JSON.stringify({
+            Username: username,
+            Message: input.value.toString()
+        }));
+        input.value = "";
+    });
+</script>
